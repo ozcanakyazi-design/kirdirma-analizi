@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KK Kırdırma vs Banka Borçlanması — Finansal Analiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0f0c;
+    --surface: #161714;
+    --surface2: #1d1e1a;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.13);
+    --text: #e8e6df;
+    --muted: #7a7870;
+    --accent-green: #4ade80;
+    --accent-green-dim: rgba(74,222,128,0.12);
+    --accent-red: #f87171;
+    --accent-red-dim: rgba(248,113,113,0.12);
+    --accent-yellow: #fbbf24;
+    --blue: #60a5fa;
+    --orange: #fb923c;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .header-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; }
+  .header-sub { font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); margin-top: 6px; }
+  .header-badge {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+  /* VERDICT BANNER */
+  .verdict-banner {
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    transition: all 0.3s ease;
+  }
+  .verdict-banner.green { background: var(--accent-green-dim); border: 1px solid rgba(74,222,128,0.25); }
+  .verdict-banner.red { background: var(--accent-red-dim); border: 1px solid rgba(248,113,113,0.25); }
+  .verdict-label { font-size: 0.72rem; font-family: var(--font-mono); letter-spacing: .08em; margin-bottom: 6px; }
+  .verdict-banner.green .verdict-label { color: var(--accent-green); }
+  .verdict-banner.red .verdict-label { color: var(--accent-red); }
+  .verdict-text { font-size: 1rem; font-weight: 600; line-height: 1.5; }
+  .verdict-saving { font-family: var(--font-mono); font-size: 1.75rem; font-weight: 500; white-space: nowrap; }
+  .verdict-banner.green .verdict-saving { color: var(--accent-green); }
+  .verdict-banner.red .verdict-saving { color: var(--accent-red); }
+  .verdict-saving-label { font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono); text-align: right; margin-top: 3px; }
+
+  /* PARAMS */
+  .params-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .param-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+  }
+  .param-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .param-name { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); letter-spacing: .04em; }
+  .param-value { font-size: 1.1rem; font-weight: 600; font-family: var(--font-mono); color: var(--accent-yellow); }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border-strong);
+    border-radius: 99px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent-yellow);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent-yellow);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent-yellow);
+    border: 2px solid var(--bg);
+  }
+
+  /* COMPARISON GRID */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .ccard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+  }
+  .ccard.winner { border-color: rgba(74,222,128,0.3); }
+  .ccard.loser { border-color: rgba(248,113,113,0.2); }
+  .ccard-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;
+  }
+  .ccard-title { font-size: 0.8rem; font-family: var(--font-mono); color: var(--muted); letter-spacing: .05em; }
+  .ccard-badge {
+    font-size: 0.65rem; font-family: var(--font-mono); padding: 3px 10px;
+    border-radius: 999px; font-weight: 500;
+  }
+  .badge-win { background: var(--accent-green-dim); color: var(--accent-green); border: 1px solid rgba(74,222,128,0.25); }
+  .badge-lose { background: var(--accent-red-dim); color: var(--accent-red); border: 1px solid rgba(248,113,113,0.2); }
+  .ccard-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+  .ccard-row:last-child { border-bottom: none; }
+  .ccard-row-label { color: var(--muted); }
+  .ccard-row-val { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 500; }
+
+  /* METRICS */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 2rem;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  .metric-label { font-size: 0.67rem; font-family: var(--font-mono); color: var(--muted); letter-spacing: .04em; margin-bottom: 8px; line-height: 1.4; }
+  .metric-val { font-size: 1.3rem; font-weight: 600; font-family: var(--font-mono); }
+  .metric-val.green { color: var(--accent-green); }
+  .metric-val.red { color: var(--accent-red); }
+  .metric-val.yellow { color: var(--accent-yellow); }
+
+  /* CHART */
+  .chart-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .chart-title { font-size: 0.72rem; font-family: var(--font-mono); color: var(--muted); letter-spacing: .06em; margin-bottom: 1rem; }
+  .chart-legend { display: flex; gap: 20px; margin-bottom: 1rem; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); }
+  .leg-sq { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .chart-wrap { position: relative; width: 100%; height: 200px; }
+
+  /* NOTE */
+  .note {
+    background: var(--surface2);
+    border-left: 2px solid var(--muted);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 1rem 1.25rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .note strong { color: var(--text); }
+
+  /* FORMULA BOX */
+  .formula-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 2;
+    color: var(--muted);
+  }
+  .formula-box .f-title { color: var(--text); font-size: 0.7rem; letter-spacing: .06em; margin-bottom: 8px; }
+  .hl { color: var(--accent-yellow); }
+  .hlb { color: var(--blue); }
+  .hlo { color: var(--orange); }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 2.5rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 700px) {
+    header { padding: 1.5rem; }
+    .container { padding: 1.5rem 1rem; }
+    .params-grid, .compare-grid { grid-template-columns: 1fr; }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">KK Kırdırma vs Banka Borçlanması</div>
+    <div class="header-sub">finansal maliyet karşılaştırma aracı — efektif yıllık faiz bazlı</div>
+  </div>
+  <div class="header-badge">parametrik · interaktif</div>
+</header>
+
+<div class="container">
+
+  <div class="verdict-banner green" id="verdict">
+    <div>
+      <div class="verdict-label" id="vLabel">KARAR</div>
+      <div class="verdict-text" id="vText">—</div>
+    </div>
+    <div>
+      <div class="verdict-saving" id="vSaving">—</div>
+      <div class="verdict-saving-label" id="vSavingLabel">dönemsel tasarruf</div>
+    </div>
+  </div>
+
+  <div class="params-grid">
+    <div class="param-card">
+      <div class="param-header">
+        <span class="param-name">BANKA BORÇLANMA FAİZİ (YILLIK)</span>
+        <span class="param-value" id="brv">%40</span>
+      </div>
+      <input type="range" min="20" max="60" step="1" value="40" id="br">
+    </div>
+    <div class="param-card">
+      <div class="param-header">
+        <span class="param-name">KIRDIRMA İSKONTO ORANI (YILLIK)</span>
+        <span class="param-value" id="drv">%37</span>
+      </div>
+      <input type="range" min="15" max="55" step="1" value="37" id="dr">
+    </div>
+    <div class="param-card">
+      <div class="param-header">
+        <span class="param-name">ORTALAMA VADE (GÜN)</span>
+        <span class="param-value" id="dvv">105 gün</span>
+      </div>
+      <input type="range" min="30" max="180" step="5" value="105" id="dv">
+    </div>
+    <div class="param-card">
+      <div class="param-header">
+        <span class="param-name">ALACAK TUTARI</span>
+        <span class="param-value" id="amv">₺1.000.000</span>
+      </div>
+      <input type="range" min="500000" max="10000000" step="500000" value="1000000" id="am">
+    </div>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric">
+      <div class="metric-label">BANKA<br>EFEKTİF YILLIK</div>
+      <div class="metric-val" id="m1">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">KIRDIRMA<br>EFEKTİF YILLIK</div>
+      <div class="metric-val" id="m2">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">DÖNEMSEL<br>FARK (TL)</div>
+      <div class="metric-val" id="m3">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">EFEKTİF ORAN<br>FARKI</div>
+      <div class="metric-val" id="m4">—</div>
+    </div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="ccard" id="bCard">
+      <div class="ccard-header">
+        <span class="ccard-title">BANKA BORÇLANMASI</span>
+        <span class="ccard-badge" id="bBadge">—</span>
+      </div>
+      <div class="ccard-row"><span class="ccard-row-label">Alınan fon</span><span class="ccard-row-val" id="b1">—</span></div>
+      <div class="ccard-row"><span class="ccard-row-label">Faiz maliyeti (dönem)</span><span class="ccard-row-val" id="b2">—</span></div>
+      <div class="ccard-row"><span class="ccard-row-label">Geri ödeme tutarı</span><span class="ccard-row-val" id="b3">—</span></div>
+      <div class="ccard-row"><span class="ccard-row-label">Dönemsel maliyet</span><span class="ccard-row-val" id="b4">—</span></div>
+      <div class="ccard-row"><span class="ccard-row-label">Efektif yıllık (bileşik)</span><span class="ccard-row-val" id="b5">—</span></div>
+    </div>
+
+    <div class="ccard" id="kCard">
+      <div class="ccard-header">
+        <span class="ccard-title">KREDİ KARTI KIRDIRMA</span>
+        <span class="ccard-badge" id="kBadge">—</span>
+      </div>
+      <div class="ccard-row"><span class="ccard-row-label">Eşdeğer nakit için alacak</span><span class="ccard-row-val" id="k1">—</span></div>
+      <div class="ccard-row"><span class="ccard-row-label">Kesilen iskonto (maliyet)</span><span class="ccard-row-val" id="k2">—</span></div>
+      <div class="ccard-row"><span class="ccard-row-label">Elde edilen net nakit</span><span class="ccard-row-val" id="k3">—</span></div>
+      <div class="ccard-row"><span class="ccard-row-label">Dönemsel maliyet</span><span class="ccard-row-val" id="k4">—</span></div>
+      <div class="ccard-row"><span class="ccard-row-label">Efektif yıllık (bileşik)</span><span class="ccard-row-val" id="k5">—</span></div>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-title">MALİYET KARŞILAŞTIRMASI (%)</div>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-sq" style="background:#60a5fa"></div>Banka borçlanması</div>
+      <div class="leg-item"><div class="leg-sq" style="background:#fb923c"></div>Kırdırma</div>
+    </div>
+    <div class="chart-wrap"><canvas id="ch"></canvas></div>
+  </div>
+
+  <div class="formula-box">
+    <div class="f-title">FORMÜLLER</div>
+    <div>Banka efektif yıllık &nbsp;= &nbsp;<span class="hl">(1 + r × d/365)<sup>365/d</sup> − 1</span> &nbsp;&nbsp; r = yıllık oran, d = gün</div>
+    <div>Kırdırma dönemsel maliyet &nbsp;= &nbsp;<span class="hlo">iskonto / net_nakit</span> &nbsp;=&nbsp; <span class="hlo">(disc × d/365) / (1 − disc × d/365)</span></div>
+    <div>Kırdırma efektif yıllık &nbsp;= &nbsp;<span class="hlo">(1 + kırdırma_dönem_oran)<sup>365/d</sup> − 1</span></div>
+    <div style="margin-top:8px;color:#555">Kritik fark: iskonto oranı <span class="hlb">yüz değer</span> üzerinden, faiz oranı <span class="hl">kullanılan para</span> üzerinden hesaplanır.</div>
+  </div>
+
+  <div class="note">
+    <strong>Metodoloji notu:</strong> Her iki seçenekte de elde edilen net nakit eşit tutulmaktadır. Kırdırma maliyeti "iskonto / net nakit" oranıyla ifade edilmekte, bileşik faiz bazında yıllıklandırılmaktadır. Dönemsel maliyet farkı, aynı nakit için iki yöntem arasındaki TL bazlı avantajı gösterir. KDV, BSMV ve diğer işlem maliyetleri dahil değildir.
+  </div>
+
+</div>
+
+<footer>
+  <span>finansal analiz aracı · efektif yıllık faiz bazlı karar desteği</span>
+  <span id="footerDate"></span>
+</footer>
+
+<script>
+var ch = null;
+
+function fmt(n){ return '₺' + Math.round(n).toLocaleString('tr-TR'); }
+function p(n){ return '%' + n.toFixed(2); }
+
+function run(){
+  var br = +document.getElementById('br').value / 100;
+  var dr = +document.getElementById('dr').value / 100;
+  var days = +document.getElementById('dv').value;
+  var amt = +document.getElementById('am').value;
+
+  document.getElementById('brv').textContent = '%' + Math.round(br*100);
+  document.getElementById('drv').textContent = '%' + Math.round(dr*100);
+  document.getElementById('dvv').textContent = days + ' gün';
+  document.getElementById('amv').textContent = fmt(amt);
+
+  var bPer = br * (days/365);
+  var bFaiz = amt * bPer;
+  var bOde = amt + bFaiz;
+  var bEff = Math.pow(1 + bPer, 365/days) - 1;
+
+  var discF = dr * (days/365);
+  var kAla = amt / (1 - discF);
+  var kIsk = kAla - amt;
+  var kPer = kIsk / amt;
+  var kEff = Math.pow(1 + kPer, 365/days) - 1;
+
+  document.getElementById('b1').textContent = fmt(amt);
+  document.getElementById('b2').textContent = fmt(bFaiz);
+  document.getElementById('b3').textContent = fmt(bOde);
+  document.getElementById('b4').textContent = p(bPer*100);
+  document.getElementById('b5').textContent = p(bEff*100);
+
+  document.getElementById('k1').textContent = fmt(kAla);
+  document.getElementById('k2').textContent = fmt(kIsk);
+  document.getElementById('k3').textContent = fmt(amt);
+  document.getElementById('k4').textContent = p(kPer*100);
+  document.getElementById('k5').textContent = p(kEff*100);
+
+  var bankWins = bEff < kEff;
+  var diffTL = Math.abs(kIsk - bFaiz);
+  var diffPct = Math.abs(kEff - bEff);
+
+  document.getElementById('m1').textContent = p(bEff*100);
+  document.getElementById('m1').className = 'metric-val ' + (bankWins ? 'green' : 'red');
+  document.getElementById('m2').textContent = p(kEff*100);
+  document.getElementById('m2').className = 'metric-val ' + (bankWins ? 'red' : 'green');
+  document.getElementById('m3').textContent = fmt(diffTL);
+  document.getElementById('m3').className = 'metric-val yellow';
+  document.getElementById('m4').textContent = p(diffPct*100);
+  document.getElementById('m4').className = 'metric-val yellow';
+
+  var bCard = document.getElementById('bCard');
+  var kCard = document.getElementById('kCard');
+  var bBadge = document.getElementById('bBadge');
+  var kBadge = document.getElementById('kBadge');
+
+  if(bankWins){
+    bCard.className = 'ccard winner';
+    kCard.className = 'ccard loser';
+    bBadge.className = 'ccard-badge badge-win';
+    bBadge.textContent = 'KAZANAN';
+    kBadge.className = 'ccard-badge badge-lose';
+    kBadge.textContent = 'DAHA PAHALI';
+  } else {
+    kCard.className = 'ccard winner';
+    bCard.className = 'ccard loser';
+    kBadge.className = 'ccard-badge badge-win';
+    kBadge.textContent = 'KAZANAN';
+    bBadge.className = 'ccard-badge badge-lose';
+    bBadge.textContent = 'DAHA PAHALI';
+  }
+
+  var verdict = document.getElementById('verdict');
+  var vText = document.getElementById('vText');
+  var vSaving = document.getElementById('vSaving');
+
+  if(bankWins){
+    verdict.className = 'verdict-banner red';
+    document.getElementById('vLabel').textContent = 'KARAR';
+    vText.textContent = 'Banka borçlanması daha avantajlı. Nominal kırdırma oranı (%' + Math.round(dr*100) + ') düşük görünse de efektif yıllık maliyet daha yüksektir (' + p(kEff*100) + ' vs ' + p(bEff*100) + ').';
+    vSaving.textContent = fmt(diffTL) + ' daha pahalı';
+    document.getElementById('vSavingLabel').textContent = 'kırdırmayı seçersen fazladan ödersin';
+  } else {
+    verdict.className = 'verdict-banner green';
+    document.getElementById('vLabel').textContent = 'KARAR';
+    vText.textContent = 'Kırdırma daha avantajlı. Efektif yıllık maliyet bankadan düşüktür (' + p(kEff*100) + ' vs banka ' + p(bEff*100) + ').';
+    vSaving.textContent = fmt(diffTL) + ' tasarruf';
+    document.getElementById('vSavingLabel').textContent = 'kırdırma tercih edilirse dönemsel kazanç';
+  }
+
+  var labels = ['Dönemsel maliyet (' + days + ' gün)', 'Efektif yıllık (bileşik)'];
+  var ds = [
+    { label:'Banka', data:[+(bPer*100).toFixed(3), +(bEff*100).toFixed(3)], backgroundColor:'#60a5fa', borderRadius:5 },
+    { label:'Kırdırma', data:[+(kPer*100).toFixed(3), +(kEff*100).toFixed(3)], backgroundColor:'#fb923c', borderRadius:5 }
+  ];
+
+  if(ch){ ch.data.labels=labels; ch.data.datasets=ds; ch.update(); }
+  else {
+    ch = new Chart(document.getElementById('ch').getContext('2d'), {
+      type: 'bar',
+      data: { labels: labels, datasets: ds },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': %' + c.parsed.y.toFixed(2) } }
+        },
+        scales: {
+          y: {
+            ticks: { callback: v => '%' + v.toFixed(1), color: '#7a7870', font: { size: 11, family: "'DM Mono', monospace" } },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          },
+          x: {
+            ticks: { color: '#7a7870', font: { size: 11, family: "'DM Mono', monospace" }, autoSkip: false },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+}
+
+document.querySelectorAll('input[type=range]').forEach(function(el){ el.addEventListener('input', run); });
+
+document.getElementById('footerDate').textContent = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+
+run();
+</script>
+</body>
+</html>
